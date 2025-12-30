@@ -1,0 +1,88 @@
+# Slack Digest Configuration
+
+# Slack API Configuration
+slack:
+  # Your Slack OAuth token (starts with xoxb-)
+  token: "YOUR_SLACK_TOKEN_HERE"
+
+  # Your Slack user ID (optional, will be auto-detected)
+  user_id: null
+
+# Digest Settings
+digest:
+  # How far back to look for messages (in hours)
+  lookback_hours: 24
+
+  # Minimum importance score to include in digest (0-100)
+  min_score: 30
+
+  # Maximum number of messages to include
+  max_messages: 50
+
+  # Group messages by channel in digest
+  group_by_channel: true
+
+  # Include summary statistics
+  include_stats: true
+
+# Default Channel Priorities
+# Options: ignore, low, medium, high
+channel_priorities:
+  default: medium
+
+# Default User Priorities (VIP list)
+# Users here get higher importance scores
+vip_users: []
+
+# Keywords to Track
+# Messages containing these get higher importance scores
+keywords: []
+
+# Scoring Weights (must sum to 100)
+scoring:
+  direct_mention_weight: 25
+  thread_participation_weight: 20
+  sender_priority_weight: 20
+  channel_priority_weight: 15
+  keyword_match_weight: 10
+  recency_weight: 10
+
+# Learning Settings
+learning:
+  # Enable automatic learning from your behavior
+  enabled: true
+
+  # Minimum interactions to consider a user "frequent"
+  min_interactions_for_vip: 5
+
+  # How many days of history to analyze for learning
+  learning_window_days: 30
+
+# Output Settings
+output:
+  # Format: console, html, markdown, json
+  format: console
+
+  # For HTML format, output file path
+  html_output: "digest.html"
+
+  # For markdown format, output file path
+  markdown_output: "digest.md"
+
+  # Show action recommendations
+  show_recommendations: true
+
+# Scheduler Settings
+scheduler:
+  # Enable daily scheduled digest
+  enabled: false
+
+  # Time to generate digest (24-hour format)
+  time: "09:00"
+
+  # Days to run (0=Monday, 6=Sunday)
+  days: [0, 1, 2, 3, 4]  # Monday-Friday
+
+# Database
+database:
+  path: "slack_digest.db"
