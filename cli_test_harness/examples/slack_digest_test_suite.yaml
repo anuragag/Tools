@@ -1,0 +1,215 @@
+name: Slack Digest Test Suite
+description: Test suite for the slack-digest CLI tool
+
+test_cases:
+  - name: Slack Digest Help
+    description: Verify main help displays correctly
+    command: slack-digest
+    args:
+      - --help
+    validations:
+      - type: contains
+        value: "Usage:"
+        stream: both
+        description: Should show usage information
+      - type: contains
+        value: "generate"
+        stream: both
+        description: Should list generate command
+      - type: contains
+        value: "config"
+        stream: both
+        description: Should list config command
+      - type: contains
+        value: "stats"
+        stream: both
+        description: Should list stats command
+    tags:
+      - help
+      - basic
+    expected_exit_code: 0
+    timeout: 10
+
+  - name: Generate Command Help
+    description: Verify generate command help
+    command: slack-digest
+    args:
+      - generate
+      - --help
+    validations:
+      - type: contains
+        value: "Usage:"
+        stream: both
+      - type: contains
+        value: "hours"
+        stream: both
+        description: Should mention hours option
+    tags:
+      - help
+      - generate
+    expected_exit_code: 0
+    timeout: 10
+
+  - name: Config Command Help
+    description: Verify config command help
+    command: slack-digest
+    args:
+      - config
+      - --help
+    validations:
+      - type: contains
+        value: "Usage:"
+        stream: both
+      - type: contains
+        value: "show"
+        stream: both
+        description: Should list show subcommand
+      - type: contains
+        value: "set-channel"
+        stream: both
+        description: Should list set-channel subcommand
+    tags:
+      - help
+      - config
+    expected_exit_code: 0
+    timeout: 10
+
+  - name: Stats Command Help
+    description: Verify stats command help
+    command: slack-digest
+    args:
+      - stats
+      - --help
+    validations:
+      - type: contains
+        value: "Usage:"
+        stream: both
+    tags:
+      - help
+      - stats
+    expected_exit_code: 0
+    timeout: 10
+
+  - name: Schedule Command Help
+    description: Verify schedule command help
+    command: slack-digest
+    args:
+      - schedule
+      - --help
+    validations:
+      - type: contains
+        value: "Usage:"
+        stream: both
+    tags:
+      - help
+      - schedule
+    expected_exit_code: 0
+    timeout: 10
+
+  - name: Config Show Subcommand Help
+    description: Verify config show help
+    command: slack-digest
+    args:
+      - config
+      - show
+      - --help
+    validations:
+      - type: contains
+        value: "Usage:"
+        stream: both
+    tags:
+      - help
+      - config
+      - subcommand
+    expected_exit_code: 0
+    timeout: 10
+
+  - name: Config Set-Channel Help
+    description: Verify config set-channel help
+    command: slack-digest
+    args:
+      - config
+      - set-channel
+      - --help
+    validations:
+      - type: contains
+        value: "Usage:"
+        stream: both
+    tags:
+      - help
+      - config
+      - subcommand
+    expected_exit_code: 0
+    timeout: 10
+
+  - name: Invalid Command
+    description: Test error handling for invalid command
+    command: slack-digest
+    args:
+      - invalid-command-xyz
+    validations:
+      - type: visual_inspection
+        value: manual
+        stream: both
+        description: Should show error message
+        required: false
+    tags:
+      - error
+      - negative
+    expected_exit_code: 2
+    timeout: 10
+
+  - name: Generate Without Config
+    description: Test generate command without configuration
+    command: slack-digest
+    args:
+      - generate
+    validations:
+      - type: visual_inspection
+        value: manual
+        stream: both
+        description: Should prompt for config or show error
+        required: false
+    tags:
+      - generate
+      - error
+    skip: true
+    skip_reason: May require Slack configuration
+    timeout: 30
+
+  - name: Config Show
+    description: Display current configuration
+    command: slack-digest
+    args:
+      - config
+      - show
+    validations:
+      - type: visual_inspection
+        value: manual
+        stream: stdout
+        description: Should display config or message about no config
+        required: false
+    tags:
+      - config
+      - show
+    skip: true
+    skip_reason: May require prior configuration
+    timeout: 10
+
+  - name: Stats Display
+    description: Show statistics
+    command: slack-digest
+    args:
+      - stats
+    validations:
+      - type: visual_inspection
+        value: manual
+        stream: stdout
+        description: Should show stats or message about no data
+        required: false
+    tags:
+      - stats
+      - display
+    skip: true
+    skip_reason: May require prior usage data
+    timeout: 10

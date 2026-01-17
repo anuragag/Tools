@@ -1,0 +1,79 @@
+name: Interactive CLI Test Suite
+description: Example test suite for multi-turn interactive CLI testing
+
+test_cases:
+  - name: Python REPL Interactive Test
+    description: Test multi-turn interaction with Python REPL
+    command: python3
+    args:
+      - -i
+    interactions:
+      - input: "print('Hello, World!')"
+        description: Print a simple message
+        validations:
+          - type: contains
+            value: "Hello, World!"
+            stream: stdout
+            description: Should print the message
+        expect_prompt: true
+        wait_before_input: 0.5
+
+      - input: "x = 42"
+        description: Set a variable
+        expect_prompt: true
+        wait_before_input: 0.2
+
+      - input: "print(x * 2)"
+        description: Use the variable
+        validations:
+          - type: contains
+            value: "84"
+            stream: stdout
+            description: Should print 84
+        expect_prompt: true
+        wait_before_input: 0.2
+
+      - input: "exit()"
+        description: Exit the REPL
+        wait_before_input: 0.2
+
+    tags:
+      - interactive
+      - python
+      - repl
+    expected_exit_code: 0
+    timeout: 30
+
+  - name: Git Interactive Add
+    description: Test interactive git add
+    command: git
+    args:
+      - add
+      - -i
+    interactions:
+      - input: "s"
+        description: View status
+        validations:
+          - type: visual_inspection
+            value: manual
+            stream: stdout
+            description: Verify status display
+            required: false
+        expect_prompt: true
+
+      - input: "q"
+        description: Quit interactive mode
+        wait_before_input: 0.5
+
+    environment:
+      working_directory: /tmp/test_repo
+      create_files:
+        /tmp/test_repo/test.txt: "Test content"
+
+    tags:
+      - interactive
+      - git
+    expected_exit_code: 0
+    timeout: 30
+    skip: true
+    skip_reason: Requires git repository setup
