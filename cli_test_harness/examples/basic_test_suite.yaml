@@ -1,0 +1,76 @@
+name: Example CLI Test Suite
+description: Example test suite demonstrating various testing capabilities
+
+test_cases:
+  - name: Help Flag Test
+    description: Verify --help flag displays help information
+    command: ls
+    args:
+      - --help
+    validations:
+      - type: exit_code
+        value: 0
+        stream: stdout
+        description: Help should exit successfully
+      - type: contains
+        value: "Usage:"
+        stream: both
+        description: Should contain usage information
+    tags:
+      - help
+      - basic
+    expected_exit_code: 0
+    timeout: 10
+
+  - name: List Current Directory
+    description: Test listing files in current directory
+    command: ls
+    args:
+      - -la
+    validations:
+      - type: exit_code
+        value: 0
+        stream: stdout
+        description: Should list files successfully
+      - type: contains
+        value: "total"
+        stream: stdout
+        description: Should show total count
+    tags:
+      - basic
+      - list
+    expected_exit_code: 0
+    timeout: 10
+
+  - name: Invalid Directory
+    description: Test error handling for non-existent directory
+    command: ls
+    args:
+      - /this/does/not/exist/xyz123
+    validations:
+      - type: contains
+        value: "No such file or directory"
+        stream: stderr
+        description: Should show error message
+    tags:
+      - error
+      - negative
+    expected_exit_code: 2
+    timeout: 10
+
+  - name: File Pattern Match
+    description: Test listing with pattern
+    command: ls
+    args:
+      - "*.py"
+    validations:
+      - type: visual_inspection
+        value: manual
+        stream: stdout
+        description: Verify only .py files are listed
+        required: false
+    tags:
+      - pattern
+      - basic
+    expected_exit_code: 0
+    timeout: 10
