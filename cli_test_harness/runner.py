@@ -414,6 +414,11 @@ class TestRunner:
                 passed = False
                 message = f"Invalid JSON: {str(e)}"
 
+        elif validation.type == ValidationType.EXIT_CODE:
+            # Exit code validation is handled separately
+            passed = True
+            message = "Exit code validation (handled separately)"
+
         elif validation.type == ValidationType.FILE_EXISTS:
             file_path = Path(work_dir) / validation.value
             passed = file_path.exists()

@@ -221,6 +221,11 @@ def run(
 
     results = []
     for i, test_case in enumerate(filtered_suite.test_cases, 1):
+        if test_case.skip:
+            click.echo(f"[{i}/{len(filtered_tests)}] {test_case.name}")
+            click.echo(f"    {click.style('⊘ SKIPPED', fg='yellow')} - {test_case.skip_reason}\n")
+            continue
+
         click.echo(f"[{i}/{len(filtered_tests)}] {test_case.name}")
         result = runner.run_test_case(test_case)
         results.append(result)
