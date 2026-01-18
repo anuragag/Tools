@@ -1,0 +1,415 @@
+name: CLI Formatting Test Suite
+description: Test suite for visually checking CLI output formatting including tables, colors, and alignment
+
+# Global environment setup (optional)
+environment:
+  setup:
+    env_vars:
+      COLUMNS: "120"  # Set terminal width for consistent formatting
+      TERM: "xterm-256color"  # Enable color support
+
+test_cases:
+  # Test 1: Table Formatting with Visual Inspection
+  - name: Table Output Formatting
+    description: Verify table is properly aligned with visual inspection
+    command: ls
+    args:
+      - -lh
+      - --color=always
+    validations:
+      # Structural validation - ensure key elements exist
+      - type: regex
+        value: '^[drwx-]{10}\s+'
+        stream: stdout
+        description: Check permissions column format
+        required: true
+
+      # Visual inspection for overall formatting
+      - type: visual_inspection
+        value: manual
+        stream: stdout
+        description: |
+          Manually verify:
+          - Columns are properly aligned
+          - File sizes are right-justified
+          - Dates are properly formatted
+          - Colors are applied correctly (if enabled)
+          - No broken lines or wrapping issues
+        required: false
+    tags:
+      - formatting
+      - table
+      - visual
+    expected_exit_code: 0
+    timeout: 10
+
+  # Test 2: Multi-column Output with Exact Spacing
+  - name: Columnar Output Test
+    description: Test multi-column formatted output
+    command: echo
+    args:
+      - |
+        Name         Age    City          Status
+        -----------  -----  ------------  --------
+        Alice        30     New York      Active
+        Bob          25     London        Active
+        Charlie      35     Tokyo         Inactive
+    validations:
+      # Check header separator exists
+      - type: contains
+        value: "-------"
+        stream: stdout
+        description: Verify separator line exists
+        required: true
+
+      # Check all expected names are present
+      - type: contains
+        value: "Alice"
+        stream: stdout
+        required: true
+
+      # Regex to verify column structure (4 columns separated by whitespace)
+      - type: regex
+        value: '^\w+\s+\d+\s+\w+\s+\w+'
+        stream: stdout
+        description: Verify 4-column structure in data rows
+        required: false
+
+      # Visual inspection for alignment
+      - type: visual_inspection
+        value: manual
+        stream: stdout
+        description: |
+          Check:
+          - Column headers align with data
+          - Consistent spacing between columns
+          - Separator line matches header width
+          - Text is left-aligned, numbers right-aligned
+        required: false
+    tags:
+      - formatting
+      - columns
+      - alignment
+    expected_exit_code: 0
+    timeout: 5
+
+  # Test 3: Color Output Verification
+  - name: ANSI Color Output Test
+    description: Verify colored output renders correctly
+    command: ls
+    args:
+      - --color=always
+      - -lh
+    validations:
+      # Check for ANSI color codes
+      - type: regex
+        value: '\x1b\[[0-9;]+m'
+        stream: stdout
+        description: Verify ANSI color codes are present
+        required: false
+
+      # Visual inspection for colors (will be rendered in HTML report)
+      - type: visual_inspection
+        value: manual
+        stream: stdout
+        description: |
+          Verify color rendering:
+          - Directories appear in blue/bold
+          - Executables appear in green
+          - Regular files have default color
+          - Special files have distinct colors
+          - Colors enhance readability
+        required: false
+    tags:
+      - formatting
+      - colors
+      - ansi
+    expected_exit_code: 0
+    timeout: 10
+
+  # Test 4: Long Output Formatting
+  - name: Long List Formatting
+    description: Test formatting of long output lists
+    command: ls
+    args:
+      - -1
+      - /usr/bin
+    validations:
+      # Check output is one item per line
+      - type: regex
+        value: '^[^\s]+$'
+        stream: stdout
+        description: Each line should contain single item (no spaces)
+        required: false
+
+      # Visual check for readability
+      - type: visual_inspection
+        value: manual
+        stream: stdout
+        description: |
+          Check:
+          - One item per line
+          - No extra whitespace
+          - Consistent formatting throughout
+          - No truncation or wrapping
+        required: false
+    tags:
+      - formatting
+      - list
+      - long-output
+    expected_exit_code: 0
+    timeout: 15
+
+  # Test 5: Tree Structure Formatting
+  - name: Tree Structure Display
+    description: Test hierarchical tree output formatting
+    command: bash
+    args:
+      - -c
+      - |
+        echo "project/"
+        echo "├── src/"
+        echo "│   ├── main.py"
+        echo "│   └── utils.py"
+        echo "├── tests/"
+        echo "│   └── test_main.py"
+        echo "└── README.md"
+    validations:
+      # Check for tree characters
+      - type: contains
+        value: "├──"
+        stream: stdout
+        description: Verify tree branch characters present
+        required: true
+
+      - type: contains
+        value: "└──"
+        stream: stdout
+        description: Verify tree end characters present
+        required: true
+
+      # Visual inspection for tree structure
+      - type: visual_inspection
+        value: manual
+        stream: stdout
+        description: |
+          Verify tree formatting:
+          - Box-drawing characters render correctly
+          - Indentation is consistent
+          - Parent-child relationships are clear
+          - No broken or misaligned lines
+          - UTF-8 characters display properly
+        required: false
+    tags:
+      - formatting
+      - tree
+      - unicode
+    expected_exit_code: 0
+    timeout: 5
+
+  # Test 6: Mixed Content Formatting
+  - name: Mixed Content Output
+    description: Test output with headers, data, and summary sections
+    command: bash
+    args:
+      - -c
+      - |
+        echo "=== System Information ==="
+        echo ""
+        echo "CPU: 4 cores @ 2.5GHz"
+        echo "RAM: 16GB"
+        echo "Disk: 512GB SSD"
+        echo ""
+        echo "Status: ✓ All systems operational"
+        echo "---"
+        echo "Last checked: 2024-01-18 10:30:00"
+    validations:
+      # Check section headers exist
+      - type: contains
+        value: "=== System Information ==="
+        stream: stdout
+        required: true
+
+      # Check for checkmark/status indicator
+      - type: regex
+        value: '[✓✔]'
+        stream: stdout
+        description: Verify status indicator (checkmark) present
+        required: false
+
+      # Visual inspection for overall layout
+      - type: visual_inspection
+        value: manual
+        stream: stdout
+        description: |
+          Check layout and formatting:
+          - Header is visually distinct
+          - Sections separated by blank lines
+          - Data fields are aligned
+          - Unicode symbols render correctly
+          - Footer/timestamp is separated
+          - Overall readability is good
+        required: false
+    tags:
+      - formatting
+      - mixed
+      - layout
+      - unicode
+    expected_exit_code: 0
+    timeout: 5
+
+  # Test 7: Error Message Formatting
+  - name: Error Output Formatting
+    description: Test error messages are properly formatted on stderr
+    command: ls
+    args:
+      - /nonexistent/directory/that/does/not/exist
+    validations:
+      # Verify error goes to stderr
+      - type: contains
+        value: "No such file or directory"
+        stream: stderr
+        required: true
+
+      # Visual inspection for error formatting
+      - type: visual_inspection
+        value: manual
+        stream: stderr
+        description: |
+          Check error message formatting:
+          - Error message is clear and readable
+          - Path is included in error message
+          - No unnecessary verbosity
+          - Proper capitalization and punctuation
+        required: false
+    tags:
+      - formatting
+      - errors
+      - stderr
+    expected_exit_code: 2
+    timeout: 5
+
+  # Test 8: Width-Constrained Output
+  - name: Narrow Terminal Output
+    description: Test output formatting with limited terminal width
+    command: bash
+    args:
+      - -c
+      - |
+        export COLUMNS=40
+        echo "This is a test of output that needs to fit within a narrow terminal width of only 40 characters"
+    validations:
+      # Basic content check
+      - type: contains
+        value: "test of output"
+        stream: stdout
+        required: true
+
+      # Visual inspection for wrapping
+      - type: visual_inspection
+        value: manual
+        stream: stdout
+        description: |
+          Check output handling with width constraints:
+          - Text wraps appropriately (if applicable)
+          - OR text is truncated cleanly (if applicable)
+          - No broken words mid-line
+          - Readability is maintained
+          - No overflow or formatting breaks
+        required: false
+    tags:
+      - formatting
+      - wrapping
+      - width
+    expected_exit_code: 0
+    timeout: 5
+
+  # Test 9: Progress Bar / Status Indicator
+  - name: Progress Indicator Formatting
+    description: Test progress bar or status indicator formatting
+    command: bash
+    args:
+      - -c
+      - |
+        echo "Processing files..."
+        echo "[████████████████████████████████] 100%"
+        echo "✓ Complete!"
+    validations:
+      # Check for progress bar
+      - type: contains
+        value: "[█"
+        stream: stdout
+        description: Verify progress bar characters
+        required: false
+
+      - type: contains
+        value: "100%"
+        stream: stdout
+        required: true
+
+      # Visual inspection
+      - type: visual_inspection
+        value: manual
+        stream: stdout
+        description: |
+          Check progress display:
+          - Progress bar renders correctly
+          - Percentage is clear
+          - Block characters align properly
+          - Success indicator is visible
+          - Overall presentation is clean
+        required: false
+    tags:
+      - formatting
+      - progress
+      - unicode
+    expected_exit_code: 0
+    timeout: 5
+
+  # Test 10: JSON Pretty Print
+  - name: JSON Formatting
+    description: Test JSON output is properly formatted and indented
+    command: echo
+    args:
+      - |
+        {
+          "name": "test",
+          "version": "1.0.0",
+          "data": {
+            "items": [1, 2, 3],
+            "enabled": true
+          }
+        }
+    validations:
+      # Validate it's valid JSON
+      - type: json_match
+        value: '{"name": "test"}'
+        stream: stdout
+        description: Verify JSON is valid and contains expected fields
+        required: true
+
+      # Check indentation
+      - type: regex
+        value: '^\s{2}"version"'
+        stream: stdout
+        description: Check for 2-space indentation
+        required: false
+
+      # Visual inspection for formatting
+      - type: visual_inspection
+        value: manual
+        stream: stdout
+        description: |
+          Check JSON formatting:
+          - Consistent indentation (2 or 4 spaces)
+          - Proper nesting visible
+          - Brackets and braces aligned
+          - Readable structure
+          - No extra whitespace
+        required: false
+    tags:
+      - formatting
+      - json
+      - indentation
+    expected_exit_code: 0
+    timeout: 5

@@ -395,6 +395,24 @@ See `examples/basic_test_suite.yaml` for a simple test suite testing the `ls` co
 
 See `examples/interactive_test_suite.yaml` for multi-turn interactive testing examples.
 
+### Example 3: Formatting Test Suite
+
+See `examples/formatting_test_suite.yaml` for comprehensive visual formatting tests including:
+- Table and column alignment
+- ANSI color output verification
+- Unicode and tree structure rendering
+- Layout and spacing validation
+- Progress indicators and status displays
+
+Run the formatting tests demo:
+
+```bash
+./demo_formatting.sh           # Console output
+./demo_formatting.sh --html    # Generate HTML report
+```
+
+For a complete guide on visual formatting tests, see [FORMATTING_TESTS.md](FORMATTING_TESTS.md).
+
 ## Creating Custom Test Cases
 
 ### Interactive Creation
