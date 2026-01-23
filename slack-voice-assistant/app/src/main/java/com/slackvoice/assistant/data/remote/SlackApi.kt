@@ -6,25 +6,14 @@ import retrofit2.http.*
 /**
  * Slack Web API interface
  * https://api.slack.com/methods
+ *
+ * Uses personal user token for authentication (xoxc- or xoxp- tokens)
  */
 interface SlackApi {
 
     companion object {
         const val BASE_URL = "https://slack.com/api/"
-        const val OAUTH_URL = "https://slack.com/oauth/v2/authorize"
     }
-
-    /**
-     * Exchange OAuth code for access token
-     */
-    @FormUrlEncoded
-    @POST("oauth.v2.access")
-    suspend fun oauthAccess(
-        @Field("client_id") clientId: String,
-        @Field("client_secret") clientSecret: String,
-        @Field("code") code: String,
-        @Field("redirect_uri") redirectUri: String
-    ): OAuthAccessResponse
 
     /**
      * Test authentication and get user info
@@ -33,14 +22,6 @@ interface SlackApi {
     suspend fun authTest(
         @Header("Authorization") auth: String
     ): AuthTestResponse
-
-    /**
-     * Get user identity
-     */
-    @GET("users.identity")
-    suspend fun usersIdentity(
-        @Header("Authorization") auth: String
-    ): UserIdentityResponse
 
     /**
      * List conversations the user is a member of

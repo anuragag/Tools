@@ -2,10 +2,8 @@ package com.slackvoice.assistant.data.auth
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.net.Uri
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
-import com.slackvoice.assistant.BuildConfig
 import com.slackvoice.assistant.data.model.SlackAuthInfo
 import com.slackvoice.assistant.data.remote.SlackApi
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -15,6 +13,19 @@ import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Manages Slack authentication using a personal user token.
+ *
+ * To get your token:
+ * 1. Open Slack in your web browser
+ * 2. Open Developer Tools (F12)
+ * 3. Go to Application > Local Storage > https://app.slack.com
+ * 4. Find the key that starts with "localConfig_v2"
+ * 5. Look for the "token" field starting with "xoxc-"
+ *
+ * Alternatively, use the legacy token page (if available):
+ * https://api.slack.com/legacy/custom-integrations/legacy-tokens
+ */
 @Singleton
 class SlackAuthManager @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -58,64 +69,49 @@ class SlackAuthManager @Inject constructor(
         }
     }
 
-    fun getOAuthUrl(): String {
-        val scopes = listOf(
-            "channels:history",
-            "channels:read",
-            "groups:history",
-            "groups:read",
-            "im:history",
-            "im:read",
-            "mpim:history",
-            "mpim:read",
-            "users:read",
-            "users:read.email",
-            "chat:write"
-        ).joinToString(",")
+    /**
+     * Validate and save a manually entered token.
+     * Supports both xoxc- (cookie) tokens and xoxp- (user) tokens.
+     */
+    suspend fun validateAndSaveToken(token: String): Result<SlackAuthInfo> {
+        val cleanToken = token.trim()
 
-        return Uri.parse(SlackApi.OAUTH_URL)
-            .buildUpon()
-            .appendQueryParameter("client_id", BuildConfig.SLACK_CLIENT_ID)
-            .appendQueryParameter("scope", scopes)
-            .appendQueryParameter("user_scope", scopes)
-            .appendQueryParameter("redirect_uri", BuildConfig.SLACK_REDIRECT_URI)
-            .build()
-            .toString()
-    }
+        // Basic validation
+        if (cleanToken.isBlank()) {
+            return Result.failure(Exception("Token cannot be empty"))
+        }
 
-    suspend fun handleOAuthCallback(code: String): Result<SlackAuthInfo> {
+        if (!cleanToken.startsWith("xoxc-") &&
+            !cleanToken.startsWith("xoxp-") &&
+            !cleanToken.startsWith("xoxb-")) {
+            return Result.failure(Exception("Invalid token format. Token should start with xoxc-, xoxp-, or xoxb-"))
+        }
+
         return try {
             _authState.value = AuthState.Authenticating
 
-            val response = slackApi.oauthAccess(
-                clientId = BuildConfig.SLACK_CLIENT_ID,
-                clientSecret = BuildConfig.SLACK_CLIENT_SECRET,
-                code = code,
-                redirectUri = BuildConfig.SLACK_REDIRECT_URI
-            )
-
-            if (!response.isOk || response.authedUser?.accessToken == null) {
-                _authState.value = AuthState.NotAuthenticated
-                return Result.failure(Exception(response.error ?: "OAuth failed"))
-            }
-
-            val userToken = response.authedUser.accessToken
-
-            // Get user info
-            val authTest = slackApi.authTest("Bearer $userToken")
+            // Test the token by calling auth.test
+            val authTest = slackApi.authTest("Bearer $cleanToken")
 
             if (!authTest.isOk) {
                 _authState.value = AuthState.NotAuthenticated
-                return Result.failure(Exception(authTest.error ?: "Auth test failed"))
+                val errorMsg = when (authTest.error) {
+                    "invalid_auth" -> "Invalid token. Please check and try again."
+                    "token_expired" -> "Token has expired. Please get a new one."
+                    "token_revoked" -> "Token has been revoked."
+                    "not_authed" -> "Token is not valid for authentication."
+                    else -> authTest.error ?: "Authentication failed"
+                }
+                return Result.failure(Exception(errorMsg))
             }
 
             val authInfo = SlackAuthInfo(
-                accessToken = userToken,
+                accessToken = cleanToken,
                 userId = authTest.userId ?: "",
-                teamId = authTest.teamId ?: response.team?.id ?: "",
-                teamName = authTest.team ?: response.team?.name ?: "",
+                teamId = authTest.teamId ?: "",
+                teamName = authTest.team ?: "",
                 userName = authTest.user ?: "",
-                scope = response.authedUser.scope ?: ""
+                scope = "user_token"
             )
 
             saveAuthInfo(authInfo)
@@ -125,7 +121,7 @@ class SlackAuthManager @Inject constructor(
             Result.success(authInfo)
         } catch (e: Exception) {
             _authState.value = AuthState.NotAuthenticated
-            Result.failure(e)
+            Result.failure(Exception("Failed to validate token: ${e.message}"))
         }
     }
 

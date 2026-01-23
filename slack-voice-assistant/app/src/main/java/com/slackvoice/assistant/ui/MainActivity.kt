@@ -1,14 +1,11 @@
 package com.slackvoice.assistant.ui
 
 import android.Manifest
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
@@ -40,9 +37,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Handle OAuth callback from deep link
-        handleIntent(intent)
-
         setContent {
             SlackVoiceAssistantTheme {
                 val navController = rememberNavController()
@@ -55,13 +49,15 @@ class MainActivity : ComponentActivity() {
                 val draftCount by viewModel.draftCount.collectAsStateWithLifecycle()
                 val hasAudioPermission by viewModel.hasAudioPermission.collectAsStateWithLifecycle()
                 val error by viewModel.error.collectAsStateWithLifecycle()
+                val isValidatingToken by viewModel.isValidatingToken.collectAsStateWithLifecycle()
 
-                // Snackbar for errors
+                // Snackbar for errors (only for non-auth errors)
                 val snackbarHostState = remember { SnackbarHostState() }
 
                 LaunchedEffect(error) {
-                    error?.let {
-                        snackbarHostState.showSnackbar(it)
+                    // Only show snackbar for errors when authenticated
+                    if (error != null && authState is SlackAuthManager.AuthState.Authenticated) {
+                        snackbarHostState.showSnackbar(error!!)
                         viewModel.clearError()
                     }
                 }
@@ -71,19 +67,23 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize()
                 ) { paddingValues ->
                     when (authState) {
-                        is SlackAuthManager.AuthState.Loading,
-                        is SlackAuthManager.AuthState.Authenticating -> {
-                            // Show loading
+                        is SlackAuthManager.AuthState.Loading -> {
+                            // Show loading state
                             LoginScreen(
-                                onSignInClick = {},
+                                onTokenSubmit = {},
                                 isLoading = true,
                                 modifier = Modifier.padding(paddingValues)
                             )
                         }
 
-                        is SlackAuthManager.AuthState.NotAuthenticated -> {
+                        is SlackAuthManager.AuthState.NotAuthenticated,
+                        is SlackAuthManager.AuthState.Authenticating -> {
                             LoginScreen(
-                                onSignInClick = { openSlackOAuth() },
+                                onTokenSubmit = { token ->
+                                    viewModel.submitToken(token)
+                                },
+                                isLoading = isValidatingToken || authState is SlackAuthManager.AuthState.Authenticating,
+                                error = error,
                                 modifier = Modifier.padding(paddingValues)
                             )
                         }
@@ -142,37 +142,6 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
-        }
-    }
-
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        handleIntent(intent)
-    }
-
-    private fun handleIntent(intent: Intent?) {
-        intent?.data?.let { uri ->
-            if (uri.scheme == "slackvoice" && uri.host == "oauth") {
-                val code = uri.getQueryParameter("code")
-                if (code != null) {
-                    viewModel.handleOAuthCallback(code)
-                }
-            }
-        }
-    }
-
-    private fun openSlackOAuth() {
-        val url = viewModel.getOAuthUrl()
-        val customTabsIntent = CustomTabsIntent.Builder()
-            .setShowTitle(true)
-            .build()
-
-        try {
-            customTabsIntent.launchUrl(this, Uri.parse(url))
-        } catch (e: Exception) {
-            // Fallback to regular browser
-            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-            startActivity(browserIntent)
         }
     }
 

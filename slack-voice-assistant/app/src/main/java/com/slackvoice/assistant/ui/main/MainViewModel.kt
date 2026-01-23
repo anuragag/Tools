@@ -58,6 +58,10 @@ class MainViewModel @Inject constructor(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
+    // Token validation loading state
+    private val _isValidatingToken = MutableStateFlow(false)
+    val isValidatingToken: StateFlow<Boolean> = _isValidatingToken.asStateFlow()
+
     // Permission state
     private val _hasAudioPermission = MutableStateFlow(checkAudioPermission())
     val hasAudioPermission: StateFlow<Boolean> = _hasAudioPermission.asStateFlow()
@@ -74,16 +78,14 @@ class MainViewModel @Inject constructor(
     }
 
     /**
-     * Get OAuth URL for sign in
+     * Validate and save a manually entered token
      */
-    fun getOAuthUrl(): String = authManager.getOAuthUrl()
-
-    /**
-     * Handle OAuth callback
-     */
-    fun handleOAuthCallback(code: String) {
+    fun submitToken(token: String) {
         viewModelScope.launch {
-            authManager.handleOAuthCallback(code).fold(
+            _isValidatingToken.value = true
+            _error.value = null
+
+            authManager.validateAndSaveToken(token).fold(
                 onSuccess = {
                     _error.value = null
                 },
@@ -91,6 +93,8 @@ class MainViewModel @Inject constructor(
                     _error.value = e.message
                 }
             )
+
+            _isValidatingToken.value = false
         }
     }
 

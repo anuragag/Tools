@@ -21,11 +21,6 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
-
-        // Slack OAuth configuration - replace with your app credentials
-        buildConfigField("String", "SLACK_CLIENT_ID", "\"${project.findProperty("SLACK_CLIENT_ID") ?: ""}\"")
-        buildConfigField("String", "SLACK_CLIENT_SECRET", "\"${project.findProperty("SLACK_CLIENT_SECRET") ?: ""}\"")
-        buildConfigField("String", "SLACK_REDIRECT_URI", "\"slackvoice://oauth/callback\"")
     }
 
     buildTypes {
@@ -109,9 +104,6 @@ dependencies {
 
     // Security - Encrypted SharedPreferences
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
-
-    // Browser - Custom Tabs for OAuth
-    implementation("androidx.browser:browser:1.7.0")
 
     // Testing
     testImplementation("junit:junit:4.13.2")
