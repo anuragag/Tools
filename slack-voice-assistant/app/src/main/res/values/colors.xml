@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Slack-inspired colors -->
+    <color name="slack_purple">#4A154B</color>
+    <color name="slack_purple_light">#611F69</color>
+    <color name="slack_green">#2EB67D</color>
+    <color name="slack_blue">#36C5F0</color>
+    <color name="slack_yellow">#ECB22E</color>
+    <color name="slack_red">#E01E5A</color>
+
+    <!-- Theme colors -->
+    <color name="primary">#4A154B</color>
+    <color name="primary_variant">#611F69</color>
+    <color name="secondary">#2EB67D</color>
+    <color name="background">#FFFFFF</color>
+    <color name="surface">#F8F8F8</color>
+    <color name="error">#E01E5A</color>
+    <color name="on_primary">#FFFFFF</color>
+    <color name="on_secondary">#FFFFFF</color>
+    <color name="on_background">#1D1C1D</color>
+    <color name="on_surface">#1D1C1D</color>
+    <color name="on_error">#FFFFFF</color>
+
+    <!-- Voice indicator colors -->
+    <color name="voice_active">#2EB67D</color>
+    <color name="voice_inactive">#CCCCCC</color>
+    <color name="voice_processing">#36C5F0</color>
+</resources>
