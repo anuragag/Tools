@@ -95,13 +95,7 @@ class SlackAuthManager @Inject constructor(
 
             if (!authTest.isOk) {
                 _authState.value = AuthState.NotAuthenticated
-                val errorMsg = when (authTest.error) {
-                    "invalid_auth" -> "Invalid token. Please check and try again."
-                    "token_expired" -> "Token has expired. Please get a new one."
-                    "token_revoked" -> "Token has been revoked."
-                    "not_authed" -> "Token is not valid for authentication."
-                    else -> authTest.error ?: "Authentication failed"
-                }
+                val errorMsg = mapSlackError(authTest.error)
                 return Result.failure(Exception(errorMsg))
             }
 
@@ -147,6 +141,69 @@ class SlackAuthManager @Inject constructor(
     }
 
     fun isAuthenticated(): Boolean = cachedAuthInfo != null
+
+    /**
+     * Maps Slack API error codes to user-friendly messages.
+     * Includes enterprise-specific errors.
+     */
+    private fun mapSlackError(error: String?): String {
+        return when (error) {
+            // Basic auth errors
+            "invalid_auth" -> "Invalid token. Please check and try again."
+            "token_expired" -> "Token has expired. Please get a new one from your browser."
+            "token_revoked" -> "Token has been revoked. Please get a new one."
+            "not_authed" -> "Token is not valid for authentication."
+            "account_inactive" -> "Your Slack account has been deactivated."
+
+            // Enterprise Grid specific errors
+            "enterprise_is_restricted" ->
+                "Your Enterprise Grid org has restricted API access. Contact your IT admin."
+            "team_access_not_granted" ->
+                "API access not granted for this workspace. Your admin may need to approve API access."
+            "org_login_required" ->
+                "Your organization requires re-authentication. Please log into Slack web and get a fresh token."
+            "ekm_access_denied" ->
+                "Access denied by Enterprise Key Management. Contact your IT admin."
+            "access_denied" ->
+                "Access denied. Your organization may have restricted this type of access."
+
+            // SSO/Session errors
+            "invalid_token_type" ->
+                "This token type is not supported. Try extracting a different token."
+            "session_expired" ->
+                "Your session has expired (SSO timeout). Please log into Slack web and get a fresh token."
+            "session_invalidated" ->
+                "Your session was invalidated. Please get a new token."
+            "session_reset_required" ->
+                "Session reset required by your admin. Log into Slack web and get a fresh token."
+            "two_factor_setup_required" ->
+                "Two-factor authentication setup required. Complete 2FA setup in Slack first."
+
+            // Rate limiting / restrictions
+            "ratelimited" ->
+                "Rate limited by Slack. Please wait a few minutes and try again."
+            "team_added_to_org" ->
+                "Your workspace was recently added to an Enterprise Grid. Token may need refresh."
+            "fatal_error" ->
+                "Slack API error. Please try again later."
+
+            // Network/connection errors
+            "request_timeout" ->
+                "Request timed out. Check your internet connection."
+            "service_unavailable" ->
+                "Slack is temporarily unavailable. Please try again later."
+
+            // Compliance
+            "compliance_exports_prevent_deletion" ->
+                "Compliance policies are active. Your org has strict data controls."
+            "org_user_not_in_team" ->
+                "You're not a member of this workspace in your Enterprise Grid."
+
+            // Unknown
+            null -> "Authentication failed. Please try again."
+            else -> "Error: $error. If this persists, try getting a fresh token."
+        }
+    }
 
     sealed class AuthState {
         data object Loading : AuthState()
