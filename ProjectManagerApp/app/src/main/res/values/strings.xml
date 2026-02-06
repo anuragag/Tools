@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Project Manager</string>
+    <string name="daily_summary">Daily Summary</string>
+    <string name="projects">Projects</string>
+    <string name="add_project">Add Project</string>
+    <string name="add_task">Add Task</string>
+    <string name="edit_project">Edit Project</string>
+    <string name="edit_task">Edit Task</string>
+    <string name="delete">Delete</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="project_name">Project Name</string>
+    <string name="task_name">Task Name</string>
+    <string name="description">Description</string>
+    <string name="deadline">Deadline</string>
+    <string name="no_projects">No projects yet. Create one!</string>
+    <string name="no_tasks">No tasks for today</string>
+    <string name="completed">Completed</string>
+    <string name="voice_command">Voice Command</string>
+    <string name="listening">Listening...</string>
+    <string name="daily_summary_notification_title">Daily Summary</string>
+    <string name="daily_summary_notification_channel">Daily Summary Notifications</string>
+    <string name="tasks_due_today">%d tasks due today</string>
+</resources>
