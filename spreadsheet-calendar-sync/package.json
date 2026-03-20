@@ -1,0 +1,19 @@
+{
+  "name": "spreadsheet-calendar-sync",
+  "version": "2.0.0",
+  "description": "Sync a Google Sheets schedule to Google Calendar",
+  "type": "module",
+  "main": "src/index.js",
+  "bin": {
+    "spreadsheet-calendar-sync": "src/index.js"
+  },
+  "scripts": {
+    "sync": "node src/index.js sync",
+    "dry-run": "node src/index.js sync --dry-run",
+    "delete": "node src/index.js delete",
+    "auth": "node src/index.js auth"
+  },
+  "dependencies": {
+    "googleapis": "^144.0.0"
+  }
+}

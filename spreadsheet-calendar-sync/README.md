@@ -1,61 +1,89 @@
 # Spreadsheet → Google Calendar Sync
 
-An Apps Script that reads a season-schedule spreadsheet (where columns are weekends and rows are leagues/categories) and creates Google Calendar events for each non-empty cell.
+A Node.js tool that reads a season-schedule spreadsheet (where columns are weekends and rows are leagues/categories) and creates Google Calendar events for each non-empty cell. Runs externally — no Apps Script needed.
 
 ## Setup
 
-1. Open your schedule spreadsheet in Google Sheets
-2. Go to **Extensions → Apps Script**
-3. Delete the default `Code.gs` content
-4. Create two files in the Apps Script editor:
-   - `Config.gs` — paste the contents of `Config.gs` from this repo
-   - `Code.gs` — paste the contents of `Code.gs` from this repo
-5. Edit `Config.gs` to set your preferences (see below)
-6. Save, then run `syncToCalendar` from the editor (or use the menu)
-7. On first run, authorize the script when prompted
+### 1. Install dependencies
 
-## Configuration (`Config.gs`)
+```bash
+cd spreadsheet-calendar-sync
+npm install
+```
+
+### 2. Create Google Cloud credentials
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a project (or use an existing one)
+3. Enable the **Google Sheets API** and **Google Calendar API**
+4. Go to **APIs & Services → Credentials**
+5. Click **Create Credentials → OAuth 2.0 Client ID**
+6. Application type: **Desktop app**
+7. Download the JSON file and save it as `credentials.json` in the project root
+
+### 3. Authorize
+
+```bash
+npm run auth
+```
+
+This opens a URL in your terminal. Visit it in a browser, authorize, and a `token.json` will be saved locally. You only need to do this once.
+
+### 4. Configure
+
+Edit `config.json`:
+
+```json
+{
+  "spreadsheetId": "YOUR_SPREADSHEET_ID",
+  "sheetNames": [],
+  "rowsToSync": [
+    { "row": 4, "label": "Tournament" },
+    { "row": 5, "label": "PCSSL Dragons" },
+    { "row": 6, "label": "PCSSL Spirit" },
+    { "row": 7, "label": "NorCal Spirit" },
+    { "row": 8, "label": "AYSO Core" }
+  ],
+  "calendarId": "primary",
+  "seasonYear": 2026,
+  "allDayEvents": true,
+  "defaultStartHour": 9,
+  "syncTag": "[spreadsheet-calendar-sync]",
+  "dryRun": false
+}
+```
 
 | Setting | Description |
 |---------|-------------|
-| `SPREADSHEET_URL` | Full URL of the Google Sheet |
-| `SHEET_NAMES` | Array of sheet names to read, e.g. `["Spring 2026"]`. Empty `[]` = first sheet |
-| `ROWS_TO_SYNC` | Array of `{ row: N, label: "Name" }` objects. Empty `[]` = auto-detect all rows with a column-A label |
-| `CALENDAR_ID` | `"primary"` for default calendar, or a specific calendar ID |
-| `SEASON_YEAR` | Year to use when parsing date headers (e.g. `2026`) |
-| `ALL_DAY_EVENTS` | `true` for all-day events, `false` for timed events |
-| `DEFAULT_START_HOUR` | Hour (0-23) for timed events |
-| `DRY_RUN` | `true` to preview without creating events (check Logs) |
+| `spreadsheetId` | The ID from the Google Sheet URL (between `/d/` and `/edit`) |
+| `sheetNames` | Array of sheet names to read. Empty `[]` = first sheet |
+| `rowsToSync` | Array of `{ row, label }` objects. Empty `[]` = auto-detect all rows with a column-A label |
+| `calendarId` | `"primary"` for default calendar, or a specific calendar ID |
+| `seasonYear` | Year to use when parsing date headers (e.g. `2026`) |
+| `allDayEvents` | `true` for all-day events, `false` for timed events |
+| `defaultStartHour` | Hour (0-23) for timed events |
+| `dryRun` | `true` to preview without creating events |
 
-### Example: Sync only specific rows
+### 5. Run
 
-```js
-ROWS_TO_SYNC: [
-  { row: 4, label: "Tournament" },
-  { row: 5, label: "PCSSL Dragons" },
-  { row: 6, label: "PCSSL Spirit" },
-  { row: 7, label: "NorCal Spirit" },
-  { row: 8, label: "AYSO Core" },
-],
+```bash
+# Sync spreadsheet to calendar
+npm run sync
+
+# Preview without making changes
+npm run dry-run
+
+# Delete all previously synced events
+npm run delete
 ```
 
-### Example: Sync a different spreadsheet
+### 6. Schedule with Claude Code `/loop`
 
-```js
-SPREADSHEET_URL: "https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/edit",
-SHEET_NAMES: ["Schedule", "Tournaments"],
+To auto-sync every 30 minutes:
+
 ```
-
-## Usage
-
-### From the menu
-After setup, reload the spreadsheet. A **Calendar Sync** menu appears with:
-- **Sync to Calendar** — create/update events
-- **Delete All Synced Events** — remove everything this script created
-- **Dry Run (preview)** — log what would happen without modifying the calendar
-
-### From the Apps Script editor
-Run `syncToCalendar()` directly. Check **View → Logs** for output.
+/loop 30m npm run sync --prefix /path/to/spreadsheet-calendar-sync
+```
 
 ## How it works
 
@@ -80,3 +108,7 @@ Run `syncToCalendar()` directly. Check **View → Logs** for output.
 - **Row 1**: Weekend date-range headers (required)
 - **Column A**: Row labels / category names
 - **Cells**: Game numbers, event names, or any text (empty = no event)
+
+## Legacy Apps Script version
+
+The original Apps Script files (`Code.gs`, `Config.gs`) are kept for reference. The Node.js version in `src/` is the recommended approach.
